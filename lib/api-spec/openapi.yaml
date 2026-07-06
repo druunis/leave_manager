@@ -1,0 +1,1135 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Leave & Working Days API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: me
+    description: Current user
+  - name: calendar
+    description: Calendar day operations
+  - name: leave
+    description: Leave requests
+  - name: dashboard
+    description: User dashboard
+  - name: notifications
+    description: In-app notifications
+  - name: settings
+    description: Policy settings
+  - name: team
+    description: Shared team availability
+  - name: admin
+    description: Admin operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [me]
+      summary: Get the current authenticated app user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateMe
+      tags: [me]
+      summary: Update the current user's own profile (first & last name)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get the current user's leave dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /calendar:
+    get:
+      operationId: getCalendar
+      tags: [calendar]
+      summary: Get the current user's calendar days within a date range
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Calendar days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+
+  /calendar/mark:
+    post:
+      operationId: markCalendarDays
+      tags: [calendar]
+      summary: Mark one or more days as working or non-working for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarMarkInput"
+      responses:
+        "200":
+          description: Updated calendar days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+
+  /leave-requests:
+    get:
+      operationId: listMyLeaveRequests
+      tags: [leave]
+      summary: List the current user's leave requests
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/RequestStatus" }
+        - name: type
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/LeaveType" }
+      responses:
+        "200":
+          description: Leave requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaveRequest"
+    post:
+      operationId: createLeaveRequest
+      tags: [leave]
+      summary: Create a leave request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequestInput"
+      responses:
+        "201":
+          description: Created leave request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+
+  /leave-requests/preview:
+    post:
+      operationId: previewLeaveRequest
+      tags: [leave]
+      summary: Calculate affected working days, paid and unpaid days for a prospective request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeaveRequestInput"
+      responses:
+        "200":
+          description: Calculation preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeavePreview"
+
+  /leave-requests/{id}/cancel:
+    post:
+      operationId: cancelLeaveRequest
+      tags: [leave]
+      summary: Cancel a pending leave request owned by the current user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Cancelled request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List the current user's notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all of the current user's notifications as read
+      responses:
+        "200":
+          description: Unread count after operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a single notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get the current policy settings
+      responses:
+        "200":
+          description: Policy settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  /team-availability:
+    get:
+      operationId: getTeamAvailability
+      tags: [team]
+      summary: Get team availability across a date range (any authenticated member)
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Team availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMemberAvailability"
+
+  /team/user-calendar:
+    get:
+      operationId: getTeamMemberCalendar
+      tags: [team]
+      summary: Get a specific team member's calendar days within a range (any authenticated member)
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: start
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Calendar days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+
+  /admin/settings:
+    patch:
+      operationId: updateSettings
+      tags: [admin]
+      summary: Update policy settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      parameters:
+        - name: includeInactive
+          in: query
+          required: false
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Users with balance summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserWithBalance"
+    post:
+      operationId: adminCreateUser
+      tags: [admin]
+      summary: Create a user record (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}:
+    get:
+      operationId: adminGetUser
+      tags: [admin]
+      summary: Get a single user with balance (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: User with balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithBalance"
+    patch:
+      operationId: adminUpdateUser
+      tags: [admin]
+      summary: Update a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: adminDeleteUser
+      tags: [admin]
+      summary: Permanently delete a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/users/{id}/deactivate:
+    post:
+      operationId: adminDeactivateUser
+      tags: [admin]
+      summary: Deactivate (soft-delete) a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/activate:
+    post:
+      operationId: adminActivateUser
+      tags: [admin]
+      summary: Reactivate a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/override-balance:
+    post:
+      operationId: adminOverrideBalance
+      tags: [admin]
+      summary: Apply a manual annual-leave balance adjustment (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BalanceOverrideInput"
+      responses:
+        "200":
+          description: User with updated balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWithBalance"
+
+  /admin/user-calendar:
+    get:
+      operationId: adminGetUserCalendar
+      tags: [admin]
+      summary: Get a specific user's calendar days within a range (admin only)
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: start
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Calendar days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+
+  /admin/leave-requests:
+    get:
+      operationId: adminListLeaveRequests
+      tags: [admin]
+      summary: List leave requests across the team with review context (admin only)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/RequestStatus" }
+        - name: type
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/LeaveType" }
+        - name: userId
+          in: query
+          required: false
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Leave requests with review context
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminLeaveRequest"
+
+  /admin/leave-requests/{id}/approve:
+    post:
+      operationId: adminApproveLeaveRequest
+      tags: [admin]
+      summary: Approve a leave request (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+
+  /admin/leave-requests/{id}/reject:
+    post:
+      operationId: adminRejectLeaveRequest
+      tags: [admin]
+      summary: Reject a leave request (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveRequest"
+
+  /admin/team-availability:
+    get:
+      operationId: adminGetTeamAvailability
+      tags: [admin]
+      summary: Get team availability across a date range (admin only)
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Team availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMemberAvailability"
+
+  /admin/report:
+    get:
+      operationId: adminGetReport
+      tags: [admin]
+      summary: Get leave report rows with filters (admin only)
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: leaveYear
+          in: query
+          required: false
+          schema: { type: integer }
+        - name: start
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: type
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/LeaveType" }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/RequestStatus" }
+      responses:
+        "200":
+          description: Report rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportRow"
+
+  /admin/unpaid-deductions:
+    get:
+      operationId: adminGetUnpaidDeductions
+      tags: [admin]
+      summary: Get approved unpaid annual-leave deductions across the team (admin only)
+      parameters:
+        - name: leaveYear
+          in: query
+          required: false
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Unpaid deduction rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnpaidDeduction"
+
+  /admin/overview:
+    get:
+      operationId: adminGetOverview
+      tags: [admin]
+      summary: Admin dashboard overview totals (admin only)
+      responses:
+        "200":
+          description: Overview totals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Role:
+      type: string
+      enum: [user, admin]
+
+    LeaveType:
+      type: string
+      enum: [annual, sick]
+
+    RequestStatus:
+      type: string
+      enum: [pending, approved, rejected, cancelled]
+
+    DayStatus:
+      type: string
+      enum:
+        - working
+        - non_working
+        - annual_pending
+        - annual_approved
+        - annual_rejected
+        - sick_pending
+        - sick_approved
+        - sick_rejected
+
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - firstName
+        - lastName
+        - email
+        - role
+        - startDate
+        - active
+        - annualEntitlement
+        - sickEntitlement
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        startDate: { type: string, format: date }
+        active: { type: boolean }
+        annualEntitlement: { type: number }
+        sickEntitlement: { type: number }
+        balanceAdjustment: { type: number }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Balance:
+      type: object
+      required:
+        - leaveYear
+        - annualEntitlement
+        - accrued
+        - carriedOver
+        - carryOverDeadline
+        - usedPaid
+        - usedUnpaid
+        - available
+        - pending
+        - wouldBeUnpaid
+        - sickUsed
+        - sickRemaining
+        - balanceAdjustment
+      properties:
+        leaveYear: { type: integer }
+        annualEntitlement: { type: number }
+        accrued: { type: number }
+        carriedOver: { type: number }
+        carryOverDeadline: { type: ["string", "null"] }
+        usedPaid: { type: number }
+        usedUnpaid: { type: number }
+        available: { type: number }
+        pending: { type: number }
+        wouldBeUnpaid: { type: number }
+        sickUsed: { type: number }
+        sickRemaining: { type: number }
+        balanceAdjustment: { type: number }
+
+    UserWithBalance:
+      type: object
+      required:
+        - user
+        - balance
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        balance: { $ref: "#/components/schemas/Balance" }
+
+    Dashboard:
+      type: object
+      required:
+        - user
+        - balance
+        - nextApprovedLeave
+        - sickOverAllowance
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        balance: { $ref: "#/components/schemas/Balance" }
+        nextApprovedLeave:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApprovedLeavePeriod"
+        sickOverAllowance: { type: boolean }
+
+    ApprovedLeavePeriod:
+      type: object
+      required:
+        - id
+        - type
+        - startDate
+        - endDate
+        - workingDays
+      properties:
+        id: { type: integer }
+        type: { $ref: "#/components/schemas/LeaveType" }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        workingDays: { type: number }
+
+    CalendarDay:
+      type: object
+      required:
+        - id
+        - userId
+        - date
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        date: { type: string, format: date }
+        status: { $ref: "#/components/schemas/DayStatus" }
+        note: { type: ["string", "null"] }
+        requestId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CalendarMarkInput:
+      type: object
+      required:
+        - dates
+        - status
+      properties:
+        dates:
+          type: array
+          items: { type: string, format: date }
+        status: { $ref: "#/components/schemas/DayStatus" }
+        note: { type: string }
+
+    LeaveRequest:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - startDate
+        - endDate
+        - workingDays
+        - paidDays
+        - unpaidDays
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        type: { $ref: "#/components/schemas/LeaveType" }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        workingDays: { type: number }
+        paidDays: { type: number }
+        unpaidDays: { type: number }
+        status: { $ref: "#/components/schemas/RequestStatus" }
+        userNote: { type: ["string", "null"] }
+        adminNote: { type: ["string", "null"] }
+        approvedBy: { type: ["integer", "null"] }
+        approvedAt: { type: ["string", "null"], format: date-time }
+        rejectedBy: { type: ["integer", "null"] }
+        rejectedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    AdminLeaveRequest:
+      type: object
+      required:
+        - request
+        - userName
+        - userEmail
+        - accruedAtDate
+        - usedAnnual
+      properties:
+        request: { $ref: "#/components/schemas/LeaveRequest" }
+        userName: { type: string }
+        userEmail: { type: string }
+        accruedAtDate: { type: number }
+        usedAnnual: { type: number }
+        sickUsed: { type: number }
+        sickOverAllowance: { type: boolean }
+
+    LeaveRequestInput:
+      type: object
+      required:
+        - type
+        - startDate
+        - endDate
+      properties:
+        type: { $ref: "#/components/schemas/LeaveType" }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        userNote: { type: string }
+
+    LeavePreview:
+      type: object
+      required:
+        - workingDays
+        - paidDays
+        - unpaidDays
+        - hasUnpaid
+        - availableBeforeRequest
+      properties:
+        workingDays: { type: number }
+        paidDays: { type: number }
+        unpaidDays: { type: number }
+        hasUnpaid: { type: boolean }
+        availableBeforeRequest: { type: number }
+        sickOverAllowance: { type: boolean }
+
+    ReviewInput:
+      type: object
+      properties:
+        adminNote: { type: string }
+
+    ProfileUpdate:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName: { type: string, minLength: 1 }
+        lastName: { type: string, minLength: 1 }
+
+    UserInput:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - startDate
+      properties:
+        firstName: { type: string, minLength: 1 }
+        lastName: { type: string, minLength: 1 }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        startDate: { type: string, format: date }
+        annualEntitlement: { type: number }
+        sickEntitlement: { type: number }
+
+    UserUpdate:
+      type: object
+      properties:
+        firstName: { type: string, minLength: 1 }
+        lastName: { type: string, minLength: 1 }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        startDate: { type: string, format: date }
+        active: { type: boolean }
+        annualEntitlement: { type: number }
+        sickEntitlement: { type: number }
+
+    BalanceOverrideInput:
+      type: object
+      required:
+        - adjustment
+      properties:
+        adjustment: { type: number }
+        note: { type: string }
+
+    Settings:
+      type: object
+      required:
+        - id
+        - annualEntitlement
+        - sickEntitlement
+        - leaveYearStartMonth
+        - leaveYearStartDay
+        - accrualDay
+        - maxRolloverDays
+        - carryOverDeadlineMonths
+        - allowExceedBalance
+        - excessBecomesUnpaid
+        - autoWeekends
+        - allowHalfDays
+        - emailNotifications
+        - updatedAt
+      properties:
+        id: { type: integer }
+        annualEntitlement: { type: number }
+        sickEntitlement: { type: number }
+        leaveYearStartMonth: { type: integer }
+        leaveYearStartDay: { type: integer }
+        accrualDay: { type: integer }
+        maxRolloverDays: { type: integer }
+        carryOverDeadlineMonths: { type: integer }
+        allowExceedBalance: { type: boolean }
+        excessBecomesUnpaid: { type: boolean }
+        autoWeekends: { type: boolean }
+        allowHalfDays: { type: boolean }
+        emailNotifications: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+
+    SettingsUpdate:
+      type: object
+      properties:
+        annualEntitlement: { type: number }
+        sickEntitlement: { type: number }
+        leaveYearStartMonth: { type: integer }
+        leaveYearStartDay: { type: integer }
+        accrualDay: { type: integer }
+        maxRolloverDays: { type: integer }
+        carryOverDeadlineMonths: { type: integer }
+        allowExceedBalance: { type: boolean }
+        excessBecomesUnpaid: { type: boolean }
+        autoWeekends: { type: boolean }
+        allowHalfDays: { type: boolean }
+        emailNotifications: { type: boolean }
+
+    TeamMemberAvailability:
+      type: object
+      required:
+        - userId
+        - userName
+        - days
+      properties:
+        userId: { type: integer }
+        userName: { type: string }
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarDay"
+
+    ReportRow:
+      type: object
+      required:
+        - userId
+        - userName
+        - leaveYear
+        - startDate
+        - annualEntitlement
+        - accrued
+        - usedPaid
+        - usedUnpaid
+        - sickUsed
+        - sickRemaining
+        - pendingCount
+        - approvedCount
+        - rejectedCount
+      properties:
+        userId: { type: integer }
+        userName: { type: string }
+        leaveYear: { type: integer }
+        startDate: { type: string, format: date }
+        annualEntitlement: { type: number }
+        accrued: { type: number }
+        usedPaid: { type: number }
+        usedUnpaid: { type: number }
+        sickUsed: { type: number }
+        sickRemaining: { type: number }
+        pendingCount: { type: integer }
+        approvedCount: { type: integer }
+        rejectedCount: { type: integer }
+
+    UnpaidDeduction:
+      type: object
+      required:
+        - userId
+        - userName
+        - requestId
+        - startDate
+        - endDate
+        - unpaidDays
+      properties:
+        userId: { type: integer }
+        userName: { type: string }
+        requestId: { type: integer }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        unpaidDays: { type: number }
+
+    AdminOverview:
+      type: object
+      required:
+        - totalUsers
+        - activeUsers
+        - pendingRequests
+        - onLeaveToday
+        - totalUnpaidDays
+      properties:
+        totalUsers: { type: integer }
+        activeUsers: { type: integer }
+        pendingRequests: { type: integer }
+        onLeaveToday: { type: integer }
+        totalUnpaidDays: { type: number }
+
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - title
+        - message
+        - read
+        - createdAt
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        message: { type: string }
+        read: { type: boolean }
+        requestId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    UnreadCount:
+      type: object
+      required:
+        - unread
+      properties:
+        unread: { type: integer }

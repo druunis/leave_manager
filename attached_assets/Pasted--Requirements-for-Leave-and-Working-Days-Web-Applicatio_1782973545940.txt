@@ -1,0 +1,511 @@
+# Requirements for Leave and Working Days Web Application
+
+## 1. Product goal
+
+Build a simple web application where team members can:
+
+1. Mark working and non working days.
+2. Request annual leave.
+3. Request sick leave.
+4. See how many paid leave days they have accrued.
+5. See whether requested leave is paid or will be deducted from salary.
+6. Allow an administrator to review team availability, leave usage, accruals, and unpaid deductions.
+
+The application should be optimized for Mobile First usage.
+
+## 2. Core policy
+
+### 2.1 Leave year
+
+The leave year starts on 1 October and ends on 30 September.
+
+Example:
+
+1. Leave year 2026 starts on 1 October 2026.
+2. Leave year 2026 ends on 30 September 2027.
+
+### 2.2 Annual leave entitlement
+
+Each full time person receives 37 annual leave days per full leave year.
+
+The application must not use local public holidays. Public holidays are ignored completely.
+
+### 2.3 Accrual logic
+
+Annual leave days are not fully available immediately. They accrue over time.
+
+The yearly entitlement is 37 days.
+
+Monthly accrual is:
+
+37 / 12 = 3.0833 days per month.
+
+Accrual should happen on the 28th day of each month.
+
+The system should calculate accrued annual leave based on:
+
+1. The person’s start date.
+2. The current leave year.
+3. The accrual date of each month, fixed as the 28th.
+4. Leave already used.
+5. Leave already requested and approved.
+
+If a person starts during a leave year, they only accrue leave from their start date onward.
+
+If a person starts mid month, the first month should be prorated based on active days in that month.
+
+Example:
+
+1. Person starts on 15 August.
+2. They do not receive the full 37 days immediately.
+3. By 30 October, the system calculates only the leave accrued between 15 August and 28 October.
+4. Any annual leave taken above that accrued amount is unpaid and deducted from salary.
+
+### 2.4 Sick leave
+
+Each person receives 5 sick leave days per leave year.
+
+Sick leave does not need to accrue.
+
+The full 5 sick leave days are available at any time during the leave year.
+
+Sick leave should be tracked separately from annual leave.
+
+Sick leave should not reduce annual leave balance.
+
+If a person requests more than 5 sick leave days in a leave year, the system should flag this for admin review.
+
+### 2.5 Working and non working days
+
+The application must allow each person to mark days as:
+
+1. Working day.
+2. Non working day.
+3. Annual leave.
+4. Sick leave.
+
+Annual leave should only consume annual leave balance for days that are normally working days for that person.
+
+Non working days should not consume annual leave.
+
+The system should not automatically treat Saturdays, Sundays, or public holidays differently unless the user or admin marks them as non working days.
+
+## 3. User roles
+
+### 3.1 Regular user
+
+A regular user can:
+
+1. Create an account with email or username and password.
+2. Log in and log out.
+3. View their own calendar.
+4. Mark working and non working days.
+5. Request annual leave.
+6. Request sick leave.
+7. View their own accrued leave balance.
+8. View used annual leave.
+9. View used sick leave.
+10. View whether any requested annual leave will be unpaid.
+11. Cancel pending requests.
+12. View request history.
+
+### 3.2 Admin user
+
+An admin user can:
+
+1. View all users.
+2. Create, edit, deactivate, and delete users.
+3. Set each user’s start date.
+4. Set each user’s annual leave entitlement, default 37 days.
+5. Set each user’s sick leave entitlement, default 5 days.
+6. View each user’s calendar.
+7. Approve or reject leave requests.
+8. Override leave balances if needed.
+9. View unpaid leave deductions.
+10. Export leave data.
+11. View team availability by day, week, month, and leave year.
+
+## 4. Authentication
+
+The application should support simple authentication.
+
+Minimum requirements:
+
+1. User registration with email or username and password.
+2. Login.
+3. Logout.
+4. Password reset.
+5. Basic password validation.
+6. Admin role assignment.
+
+No complex SSO is required for the first version.
+
+## 5. Main screens
+
+### 5.1 User dashboard
+
+The user dashboard should show:
+
+1. Annual leave accrued.
+2. Annual leave used.
+3. Annual leave available.
+4. Annual leave requested but not yet approved.
+5. Annual leave that will be unpaid if approved.
+6. Sick leave used.
+7. Sick leave remaining.
+8. Next approved leave dates.
+9. Calendar shortcut.
+
+### 5.2 Calendar screen
+
+The calendar should be the main interaction screen.
+
+It should allow the user to:
+
+1. Tap a date.
+2. Mark it as working.
+3. Mark it as non working.
+4. Request annual leave.
+5. Request sick leave.
+6. See approved leave.
+7. See pending leave.
+8. See rejected leave.
+9. See unpaid leave warning.
+
+The calendar should work well on mobile screens.
+
+### 5.3 Leave request screen
+
+The user should be able to create a leave request with:
+
+1. Leave type, annual leave or sick leave.
+2. Start date.
+3. End date.
+4. Optional note.
+5. Calculated number of affected working days.
+6. Paid days.
+7. Unpaid days.
+8. Warning before submitting if any annual leave will be unpaid.
+
+### 5.4 Admin approval screen
+
+The admin should see:
+
+1. Requesting user.
+2. Leave type.
+3. Date range.
+4. Number of working days affected.
+5. Paid days.
+6. Unpaid days.
+7. User’s accrued balance at the relevant date.
+8. User’s used balance.
+9. Optional note.
+10. Approve button.
+11. Reject button.
+12. Admin comment field.
+
+### 5.5 Admin team calendar
+
+The admin should be able to see all team members in a calendar view.
+
+The view should show:
+
+1. Who is working.
+2. Who is on annual leave.
+3. Who is on sick leave.
+4. Who is non working.
+5. Pending requests.
+6. Approved requests.
+
+## 6. Annual leave calculation rules
+
+### 6.1 Accrued leave
+
+For each user, accrued leave is calculated for the current leave year.
+
+Formula:
+
+Annual entitlement divided by 12, multiplied by the number of monthly accrual periods completed, with prorating for partial months.
+
+Default annual entitlement:
+
+37 days.
+
+Default monthly accrual:
+
+3.0833 days.
+
+Accrual date:
+
+28th day of each month.
+
+### 6.2 Available paid annual leave
+
+Available paid annual leave equals:
+
+Accrued annual leave minus approved annual leave already used or scheduled.
+
+Pending requests should be shown separately.
+
+### 6.3 Future leave requests
+
+When a user requests annual leave for a future date, the system should calculate whether enough leave will have accrued by the requested leave date.
+
+Example:
+
+1. Today is 10 October.
+2. User requests leave for 25 October.
+3. System calculates accrued leave up to 28 September, because 28 October has not happened yet.
+4. If the user requests leave for 30 October, system calculates accrued leave up to 28 October.
+
+### 6.4 Unpaid leave
+
+If requested annual leave exceeds accrued available annual leave, the excess days are treated as unpaid.
+
+The system should not block the request.
+
+The system should clearly show:
+
+1. Paid annual leave days.
+2. Unpaid annual leave days.
+3. Estimated salary deduction days.
+
+Example:
+
+1. User has accrued 6 paid annual leave days.
+2. User requests 8 working days of annual leave.
+3. 6 days are paid.
+4. 2 days are unpaid.
+5. 2 days should be marked for salary deduction.
+
+### 6.5 Rounding
+
+The application should support fractional leave balances internally.
+
+Display should round to 2 decimal places.
+
+The admin should be able to configure whether leave requests are counted in:
+
+1. Full days only.
+2. Half days.
+3. Decimal days.
+
+For the first version, full days only is acceptable.
+
+## 7. Data model
+
+### 7.1 User
+
+Each user should have:
+
+1. User ID.
+2. Name.
+3. Email or username.
+4. Password hash.
+5. Role, user or admin.
+6. Start date.
+7. Status, active or inactive.
+8. Annual leave entitlement, default 37.
+9. Sick leave entitlement, default 5.
+10. Created date.
+11. Updated date.
+
+### 7.2 Calendar day
+
+Each calendar day record should have:
+
+1. User ID.
+2. Date.
+3. Day status.
+4. Optional note.
+5. Created date.
+6. Updated date.
+
+Allowed day statuses:
+
+1. Working.
+2. Non working.
+3. Annual leave pending.
+4. Annual leave approved.
+5. Annual leave rejected.
+6. Sick leave pending.
+7. Sick leave approved.
+8. Sick leave rejected.
+
+### 7.3 Leave request
+
+Each leave request should have:
+
+1. Request ID.
+2. User ID.
+3. Leave type.
+4. Start date.
+5. End date.
+6. Number of working days.
+7. Paid days.
+8. Unpaid days.
+9. Status.
+10. User note.
+11. Admin note.
+12. Approved by.
+13. Approved at.
+14. Rejected by.
+15. Rejected at.
+16. Created date.
+17. Updated date.
+
+Allowed request statuses:
+
+1. Pending.
+2. Approved.
+3. Rejected.
+4. Cancelled.
+
+Allowed leave types:
+
+1. Annual leave.
+2. Sick leave.
+
+### 7.4 Leave balance snapshot
+
+The system should be able to calculate balances dynamically.
+
+Optionally, it can store monthly snapshots for audit purposes.
+
+A snapshot should include:
+
+1. User ID.
+2. Leave year.
+3. Snapshot date.
+4. Accrued annual leave.
+5. Used annual leave.
+6. Available annual leave.
+7. Sick leave used.
+8. Sick leave remaining.
+9. Unpaid leave days.
+
+## 8. Admin configuration
+
+The admin should be able to configure:
+
+1. Annual leave entitlement, default 37.
+2. Sick leave entitlement, default 5.
+3. Leave year start date, default 1 October.
+4. Leave year end date, default 30 September.
+5. Monthly accrual day, default 28.
+6. Whether requests can exceed accrued balance, default yes.
+7. Whether excess annual leave becomes unpaid, default yes.
+8. Whether weekends are treated automatically, default no.
+9. Whether half days are allowed, default no.
+
+## 9. Notifications
+
+Minimum notification requirements:
+
+1. User receives confirmation after submitting a request.
+2. Admin is notified about a new request.
+3. User is notified when a request is approved.
+4. User is notified when a request is rejected.
+5. User sees a warning before submitting unpaid annual leave.
+
+Email notifications are useful but not required for the first version. In app notifications are enough.
+
+## 10. Reporting and exports
+
+The admin should be able to export CSV reports with:
+
+1. User name.
+2. Leave year.
+3. Start date.
+4. Annual leave entitlement.
+5. Accrued annual leave.
+6. Used paid annual leave.
+7. Used unpaid annual leave.
+8. Sick leave used.
+9. Remaining sick leave.
+10. Pending requests.
+11. Approved requests.
+12. Rejected requests.
+
+The admin should also be able to filter reports by:
+
+1. User.
+2. Date range.
+3. Leave year.
+4. Leave type.
+5. Request status.
+
+## 11. Mobile First UX requirements
+
+The application should be designed primarily for mobile.
+
+Requirements:
+
+1. Calendar must be usable on a phone.
+2. Main actions should require very few taps.
+3. Leave balance should be visible immediately after login.
+4. Requesting leave should be possible in under one minute.
+5. Warnings about unpaid leave should be clear and visible.
+6. Buttons should be large enough for touch usage.
+7. Text should be readable without zooming.
+8. The layout should also work on desktop, but desktop is secondary.
+
+## 12. Security and privacy
+
+Minimum requirements:
+
+1. Passwords must never be stored in plain text.
+2. Users must only see their own data.
+3. Admins can see all users.
+4. All write actions should be protected by authentication.
+5. Leave approval and rejection actions should be logged.
+6. Deleted users should preferably be deactivated rather than permanently removed, so historical leave records remain valid.
+
+## 13. Acceptance criteria
+
+The first version is complete when:
+
+1. A user can register and log in.
+2. An admin can create or manage users.
+3. A user can mark working and non working days.
+4. A user can request annual leave.
+5. A user can request sick leave.
+6. The system calculates annual leave accrual from 1 October to 30 September.
+7. The system accrues annual leave monthly on the 28th.
+8. The system prorates leave for users who started after the beginning of the leave year.
+9. The system shows whether annual leave is paid or unpaid.
+10. The system allows annual leave above accrued balance but marks the excess as unpaid.
+11. The system tracks 5 sick leave days separately from annual leave.
+12. The admin can approve or reject requests.
+13. The user can see request status.
+14. The admin can export a basic CSV report.
+15. The application works well on a mobile phone.
+
+## 14. Out of scope for first version
+
+The first version does not need:
+
+1. Local public holiday calendars.
+2. Payroll integration.
+3. Accounting system integration.
+4. SSO.
+5. Complex approval chains.
+6. Multiple legal entities.
+7. Different country specific holiday policies.
+8. Automatic weekend handling unless configured later.
+9. Native mobile apps.
+10. Advanced HR features.
+
+## 15. Important implementation note
+
+The leave rules should be implemented as configurable settings, not hardcoded everywhere.
+
+The default policy is:
+
+1. 37 annual leave days per leave year.
+2. 5 sick leave days per leave year.
+3. Leave year from 1 October to 30 September.
+4. Accrual on the 28th day of each month.
+5. No local public holidays.
+6. Annual leave above accrued balance is allowed but unpaid.
+7. Mobile First web application.
