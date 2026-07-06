@@ -3,6 +3,7 @@ import { eq, and, gte, lte, inArray } from "drizzle-orm";
 import { db, usersTable, leaveRequestsTable } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
 import { composeName } from "../lib/names";
+import { toApiUser } from "../lib/users";
 import { getSettings } from "../lib/settings";
 import {
   computeBalance,
@@ -20,7 +21,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/me", requireAuth, async (req, res): Promise<void> => {
-  res.json(GetMeResponse.parse(req.localUser));
+  res.json(GetMeResponse.parse(toApiUser(req.localUser!)));
 });
 
 router.patch("/me", requireAuth, async (req, res): Promise<void> => {
@@ -41,7 +42,7 @@ router.patch("/me", requireAuth, async (req, res): Promise<void> => {
     .set({ firstName, lastName, name, nameManuallySet: true })
     .where(eq(usersTable.id, req.localUser!.id))
     .returning();
-  res.json(UpdateMeResponse.parse(updated));
+  res.json(UpdateMeResponse.parse(toApiUser(updated)));
 });
 
 router.get("/dashboard", requireAuth, async (req, res): Promise<void> => {
@@ -74,7 +75,7 @@ router.get("/dashboard", requireAuth, async (req, res): Promise<void> => {
 
   res.json(
     GetDashboardResponse.parse({
-      user,
+      user: toApiUser(user),
       balance,
       nextApprovedLeave,
       sickOverAllowance: balance.sickUsed > user.sickEntitlement,

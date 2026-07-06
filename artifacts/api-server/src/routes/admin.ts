@@ -10,6 +10,7 @@ import {
 import { requireAuth, requireAdmin } from "../lib/auth";
 import { getSettings } from "../lib/settings";
 import { composeName } from "../lib/names";
+import { toApiUser } from "../lib/users";
 import {
   computeBalance,
   accruedAsOf,
@@ -77,7 +78,7 @@ router.get("/admin/users", async (req, res): Promise<void> => {
   const out = [];
   for (const user of users) {
     const balance = await computeBalance(user, settings);
-    out.push({ user, balance });
+    out.push({ user: toApiUser(user), balance });
   }
   res.json(AdminListUsersResponse.parse(out));
 });
@@ -114,7 +115,7 @@ router.post("/admin/users", async (req, res): Promise<void> => {
         parsed.data.sickEntitlement ?? settings.sickEntitlement,
     })
     .returning();
-  res.status(201).json(AdminCreateUserResponse.parse(created));
+  res.status(201).json(AdminCreateUserResponse.parse(toApiUser(created)));
 });
 
 router.get("/admin/users/:id", async (req, res): Promise<void> => {
@@ -133,7 +134,7 @@ router.get("/admin/users/:id", async (req, res): Promise<void> => {
     return;
   }
   const balance = await computeBalance(user, settings);
-  res.json(AdminGetUserResponse.parse({ user, balance }));
+  res.json(AdminGetUserResponse.parse({ user: toApiUser(user), balance }));
 });
 
 router.patch("/admin/users/:id", async (req, res): Promise<void> => {
@@ -184,7 +185,7 @@ router.patch("/admin/users/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "User not found" });
     return;
   }
-  res.json(AdminUpdateUserResponse.parse(updated));
+  res.json(AdminUpdateUserResponse.parse(toApiUser(updated)));
 });
 
 router.delete("/admin/users/:id", async (req, res): Promise<void> => {
@@ -229,7 +230,7 @@ router.post("/admin/users/:id/deactivate", async (req, res): Promise<void> => {
     res.status(404).json({ error: "User not found" });
     return;
   }
-  res.json(AdminDeactivateUserResponse.parse(updated));
+  res.json(AdminDeactivateUserResponse.parse(toApiUser(updated)));
 });
 
 router.post("/admin/users/:id/activate", async (req, res): Promise<void> => {
@@ -247,7 +248,7 @@ router.post("/admin/users/:id/activate", async (req, res): Promise<void> => {
     res.status(404).json({ error: "User not found" });
     return;
   }
-  res.json(AdminActivateUserResponse.parse(updated));
+  res.json(AdminActivateUserResponse.parse(toApiUser(updated)));
 });
 
 router.post(
@@ -294,7 +295,7 @@ router.post(
       "Balance adjusted",
       `An administrator adjusted your annual balance by ${parsed.data.adjustment} day(s).`,
     );
-    res.json(AdminOverrideBalanceResponse.parse({ user: updated, balance }));
+    res.json(AdminOverrideBalanceResponse.parse({ user: toApiUser(updated), balance }));
   },
 );
 

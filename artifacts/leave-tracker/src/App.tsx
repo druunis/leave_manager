@@ -21,7 +21,9 @@ import RequestsPage from "@/pages/requests";
 import NewRequestPage from "@/pages/new-request";
 import NotificationsPage from "@/pages/notifications";
 import ProfilePage from "@/pages/profile";
+import OnboardingPage from "@/pages/onboarding";
 import TeamPage from "@/pages/team";
+import RequireProfileComplete from "@/components/require-profile-complete";
 
 import AdminOverviewPage from "@/pages/admin/overview";
 import AdminApprovalsPage from "@/pages/admin/approvals";
@@ -115,7 +117,12 @@ function SignInPage() {
 function SignUpPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <SignUp
+        routing="path"
+        path={`${basePath}/sign-up`}
+        signInUrl={`${basePath}/sign-in`}
+        forceRedirectUrl={`${basePath}/onboarding`}
+      />
     </div>
   );
 }
@@ -165,27 +172,34 @@ function AppRoutes() {
       {/* Protected Routes wrapper — pathless Route always matches remaining paths */}
       <Route>
         <Show when="signed-in">
-          <MainLayout>
-            <Switch>
-              <Route path="/dashboard" component={DashboardPage} />
-              <Route path="/calendar" component={CalendarPage} />
-              <Route path="/requests" component={RequestsPage} />
-              <Route path="/requests/new" component={NewRequestPage} />
-              <Route path="/team" component={TeamPage} />
-              <Route path="/notifications" component={NotificationsPage} />
-              <Route path="/profile" component={ProfilePage} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" component={AdminOverviewPage} />
-              <Route path="/admin/approvals" component={AdminApprovalsPage} />
-              <Route path="/admin/team" component={AdminTeamPage} />
-              <Route path="/admin/users" component={AdminUsersPage} />
-              <Route path="/admin/reports" component={AdminReportsPage} />
-              <Route path="/admin/settings" component={AdminSettingsPage} />
-              
-              <Route component={NotFound} />
-            </Switch>
-          </MainLayout>
+          <Switch>
+            <Route path="/onboarding" component={OnboardingPage} />
+            <Route>
+              <RequireProfileComplete>
+                <MainLayout>
+                  <Switch>
+                    <Route path="/dashboard" component={DashboardPage} />
+                    <Route path="/calendar" component={CalendarPage} />
+                    <Route path="/requests" component={RequestsPage} />
+                    <Route path="/requests/new" component={NewRequestPage} />
+                    <Route path="/team" component={TeamPage} />
+                    <Route path="/notifications" component={NotificationsPage} />
+                    <Route path="/profile" component={ProfilePage} />
+
+                    {/* Admin Routes */}
+                    <Route path="/admin" component={AdminOverviewPage} />
+                    <Route path="/admin/approvals" component={AdminApprovalsPage} />
+                    <Route path="/admin/team" component={AdminTeamPage} />
+                    <Route path="/admin/users" component={AdminUsersPage} />
+                    <Route path="/admin/reports" component={AdminReportsPage} />
+                    <Route path="/admin/settings" component={AdminSettingsPage} />
+
+                    <Route component={NotFound} />
+                  </Switch>
+                </MainLayout>
+              </RequireProfileComplete>
+            </Route>
+          </Switch>
         </Show>
         <Show when="signed-out">
           <Redirect to="/sign-in" />
