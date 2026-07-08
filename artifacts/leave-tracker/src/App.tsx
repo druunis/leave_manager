@@ -15,6 +15,7 @@ import { setAuthTokenGetter } from "@workspace/api-client-react";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import MainLayout from "@/components/layout";
+import ProfileCompletionGate from "@/components/profile-completion-gate";
 
 import DashboardPage from "@/pages/dashboard";
 import CalendarPage from "@/pages/calendar";
@@ -213,27 +214,29 @@ function AppRoutes() {
       {/* Protected Routes wrapper — pathless Route always matches remaining paths */}
       <Route>
         <Show when="signed-in">
-          <MainLayout>
-            <Switch>
-              <Route path="/dashboard" component={DashboardPage} />
-              <Route path="/calendar" component={CalendarPage} />
-              <Route path="/requests" component={RequestsPage} />
-              <Route path="/requests/new" component={NewRequestPage} />
-              <Route path="/team" component={TeamPage} />
-              <Route path="/notifications" component={NotificationsPage} />
-              <Route path="/profile" component={ProfilePage} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" component={AdminOverviewPage} />
-              <Route path="/admin/approvals" component={AdminApprovalsPage} />
-              <Route path="/admin/team" component={AdminTeamPage} />
-              <Route path="/admin/users" component={AdminUsersPage} />
-              <Route path="/admin/reports" component={AdminReportsPage} />
-              <Route path="/admin/settings" component={AdminSettingsPage} />
-              
-              <Route component={NotFound} />
-            </Switch>
-          </MainLayout>
+          <ProfileCompletionGate>
+            <MainLayout>
+              <Switch>
+                <Route path="/dashboard" component={DashboardPage} />
+                <Route path="/calendar" component={CalendarPage} />
+                <Route path="/requests" component={RequestsPage} />
+                <Route path="/requests/new" component={NewRequestPage} />
+                <Route path="/team" component={TeamPage} />
+                <Route path="/notifications" component={NotificationsPage} />
+                <Route path="/profile" component={ProfilePage} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" component={AdminOverviewPage} />
+                <Route path="/admin/approvals" component={AdminApprovalsPage} />
+                <Route path="/admin/team" component={AdminTeamPage} />
+                <Route path="/admin/users" component={AdminUsersPage} />
+                <Route path="/admin/reports" component={AdminReportsPage} />
+                <Route path="/admin/settings" component={AdminSettingsPage} />
+                
+                <Route component={NotFound} />
+              </Switch>
+            </MainLayout>
+          </ProfileCompletionGate>
         </Show>
         <Show when="signed-out">
           <Redirect to="/sign-in" />
