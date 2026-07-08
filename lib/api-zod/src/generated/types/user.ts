@@ -13,6 +13,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  /** True once the user has explicitly provided their first and last name */
+  profileComplete: boolean;
   role: Role;
   startDate: Date;
   active: boolean;

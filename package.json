@@ -9,12 +9,18 @@
     "dev:api": "pnpm --filter @workspace/api-server run dev",
     "dev:web": "pnpm --filter @workspace/leave-tracker run dev",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "private": true,
   "devDependencies": {
+    "@clerk/testing": "^2.2.2",
+    "@playwright/test": "^1.61.1",
+    "@types/supertest": "^7.2.0",
     "concurrently": "^9.2.1",
+    "playwright": "^1.61.1",
     "prettier": "^3.8.4",
+    "supertest": "^7.2.2",
     "typescript": "~5.9.3"
   }
 }

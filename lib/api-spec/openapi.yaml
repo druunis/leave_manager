@@ -734,6 +734,7 @@ components:
         - active
         - annualEntitlement
         - sickEntitlement
+        - profileComplete
         - createdAt
         - updatedAt
       properties:
@@ -742,6 +743,9 @@ components:
         firstName: { type: string }
         lastName: { type: string }
         email: { type: string }
+        profileComplete:
+          type: boolean
+          description: True once the user has explicitly provided their first and last name
         role: { $ref: "#/components/schemas/Role" }
         startDate: { type: string, format: date }
         active: { type: boolean }

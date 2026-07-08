@@ -5,3 +5,5 @@ dist/
 *.tsbuildinfo
 .pnpm-store/
 .DS_Store
+test-results/
+playwright-report/
