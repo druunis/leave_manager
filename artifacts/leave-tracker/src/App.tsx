@@ -4,12 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, ClerkLoading, ClerkLoaded } from "@clerk/react";
+import { useEffect, useRef, useState } from "react";
+import { ClerkProvider, SignIn, SignUp, Show, useAuth, useClerk, ClerkLoading, ClerkLoaded } from "@clerk/react";
 import { Loader2 } from "lucide-react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { useLocation } from "wouter";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
@@ -53,6 +54,14 @@ function stripBase(path: string): string {
 
 if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
+}
+
+function FullPageLoader() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 }
 
 const clerkAppearance = {
@@ -155,6 +164,45 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+function ClerkApiAuthBridge({ children }: { children: React.ReactNode }) {
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth();
+  const [registeredAuthKey, setRegisteredAuthKey] = useState<string | undefined>();
+  const currentAuthKey = !isLoaded
+    ? undefined
+    : isSignedIn
+      ? `signed-in:${userId ?? ""}`
+      : "signed-out";
+
+  useEffect(() => {
+    if (!isLoaded) {
+      setRegisteredAuthKey(undefined);
+      return;
+    }
+
+    if (!isSignedIn) {
+      setAuthTokenGetter(null);
+      setRegisteredAuthKey("signed-out");
+      return () => {
+        setAuthTokenGetter(null);
+      };
+    }
+
+    const authKey = `signed-in:${userId ?? ""}`;
+    setAuthTokenGetter(() => getToken());
+    setRegisteredAuthKey(authKey);
+
+    return () => {
+      setAuthTokenGetter(null);
+    };
+  }, [getToken, isLoaded, isSignedIn, userId]);
+
+  if (registeredAuthKey !== currentAuthKey) {
+    return <FullPageLoader />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <Switch>
@@ -226,12 +274,12 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <ErrorBoundary>
           <ClerkLoading>
-            <div className="flex min-h-[100dvh] items-center justify-center bg-background">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <FullPageLoader />
           </ClerkLoading>
           <ClerkLoaded>
-            <AppRoutes />
+            <ClerkApiAuthBridge>
+              <AppRoutes />
+            </ClerkApiAuthBridge>
           </ClerkLoaded>
         </ErrorBoundary>
       </QueryClientProvider>
